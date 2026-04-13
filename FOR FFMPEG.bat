@@ -1,124 +1,162 @@
 @echo off
-:: Video Utility Script using FFMPEG
-setlocal enabledelayedexpansion
+setlocal EnableDelayedExpansion
+title FFmpeg Video Tools
+mode con: cols=90 lines=32
+
+:: Run from this script's folder so relative paths work when double-clicked
+pushd "%~dp0" 2>nul
 
 :menu
+color 0B
 cls
-echo.
-echo =============================
-echo  Video Utility Script
-echo =============================
-echo 1. Batch Video Resizer
-echo 2. Video Joiner
-echo 3. Video Cutter
-echo 4. Video to GIF Converter (Additional Feature)
-echo 5. Exit
-echo =============================
-set /p choice="Choose an option: "
+call :draw_main_menu
+choice /c 12345 /n /m "  Select [1]-[5] : "
+if errorlevel 5 goto exit_app
+if errorlevel 4 goto gif_converter
+if errorlevel 3 goto cutter
+if errorlevel 2 goto joiner
+if errorlevel 1 goto resizer
+goto menu
 
-if %choice%==1 goto resizer
-if %choice%==2 goto joiner
-if %choice%==3 goto cutter
-if %choice%==4 goto gif_converter
-if %choice%==5 exit
+:draw_main_menu
+echo.
+echo    __________________________________________________________________________________
+echo.
+echo FFMPEG VIDEO TOOLS
+echo      Resize, join, cut, or turn clips into GIFs - all from this menu.
+echo    __________________________________________________________________________________
+echo.
+echo      [1]  Batch Video Resizer - all .mkv / .mp4 in this folder ^(prefix: resized_^)
+echo      [2]  Video Joiner            - expects 1.mkv, 2.mkv, 3.mkv  -^> output_combined.mkv
+echo      [3]  Video Cutter            - stream copy to cut_filename
+echo      [4]  Video to GIF            - short clip to GIF ^(fps 10, width 320^)
+echo      [5]  Exit
+echo.
+echo    __________________________________________________________________________________
+exit /b 0
 
 :resizer
-cls
-echo =============================
-echo  Batch Video Resizer
-echo =============================
-echo Purpose: Resize multiple video files to different resolutions (high, medium, low).
-echo How to Use:
-echo 1. Choose a quality level:
-echo    - high: 1920x1080 (Full HD)
-echo    - medium: 1280x720 (HD)
-echo    - low: 640x360 (SD)
-echo 2. The script will process all .mkv and .mp4 files in the folder.
-echo 3. New files will be created with the prefix "resized_".
+color 0E
+call :section_header "BATCH VIDEO RESIZER"
+echo      Pick a target resolution. Files are scaled with ffmpeg scale=WxH.
+echo      Output names: resized_originalname.ext
 echo.
-set /p quality="Choose quality (high, medium, low): "
+choice /c HMLB /n /m "  [H] Full HD 1920x1080   [M] HD 1280x720   [L] SD 640x360   [B] Back : "
+if errorlevel 4 goto menu
+if errorlevel 3 set "scale=640:360" & set "quality=low"
+if errorlevel 2 set "scale=1280:720" & set "quality=medium"
+if errorlevel 1 set "scale=1920:1080" & set "quality=high"
 
-if /i "%quality%"=="high" set scale=1920:1080
-if /i "%quality%"=="medium" set scale=1280:720
-if /i "%quality%"=="low" set scale=640:360
-
+echo.
+echo      Processing .mkv and .mp4 in:
+echo      %CD%
+echo.
 for %%A in (*.mkv *.mp4) do (
-    echo Resizing %%A to %quality%...
-    ffmpeg -i "%%A" -vf "scale=%scale%" -progress "progress.txt" -nostats "resized_%%A"
+    echo      --- Resizing %%A ^(!quality!^) ---
+    ffmpeg -hide_banner -loglevel error -i "%%A" -vf "scale=!scale!" -progress "progress.txt" -nostats -y "resized_%%A"
     call :show_progress
 )
-
-echo Done resizing videos!
-pause
+color 0A
+echo.
+echo      Done. Resized files use the prefix resized_
+call :pause_menu
 goto menu
 
 :joiner
-cls
-echo =============================
-echo  Video Joiner
-echo =============================
-echo Purpose: Combine multiple video files into one, maintaining numerical order.
-echo How to Use:
-echo 1. Ensure your video files are named as 1.mkv, 2.mkv, 3.mkv, etc.
-echo 2. The script will join these videos into "output_combined.mkv".
+color 0E
+call :section_header "VIDEO JOINER"
+echo      Builds joinlist.txt from 1.mkv, 2.mkv, 3.mkv then concat-copies to output_combined.mkv
 echo.
-echo Creating a list of videos to join...
+echo      Working folder: %CD%
+echo.
+echo      Building list...
 (for %%A in (1.mkv 2.mkv 3.mkv) do echo file '%%A') > joinlist.txt
 
-echo Joining videos...
-ffmpeg -f concat -safe 0 -i joinlist.txt -c copy -progress "progress.txt" -nostats output_combined.mkv
+echo      Joining with ffmpeg...
+ffmpeg -hide_banner -loglevel error -f concat -safe 0 -i joinlist.txt -c copy -progress "progress.txt" -nostats -y output_combined.mkv
 call :show_progress
 
-del joinlist.txt
-echo Videos joined into output_combined.mkv!
-pause
+del joinlist.txt 2>nul
+color 0A
+echo.
+echo      Saved: output_combined.mkv
+call :pause_menu
 goto menu
 
 :cutter
-cls
-echo =============================
-echo  Video Cutter
-echo =============================
-echo Purpose: Cut a specific portion from a video based on user-defined start and end times.
-echo How to Use:
-echo 1. Enter the full name of the video file (e.g., example.mkv).
-echo 2. Input the start time in HH:MM:SS format (e.g., 00:01:30).
-echo 3. Input the end time in the same format.
-echo 4. A new file named "cut_example.mkv" will be created with the specified segment.
+color 0E
+call :section_header "VIDEO CUTTER"
+echo      Stream-copy cut ^(fast^). Output: cut_yourfile.ext
 echo.
-set /p filename="Enter the video file name (with extension): "
-set /p starttime="Enter the start time (format HH:MM:SS): "
-set /p endtime="Enter the end time (format HH:MM:SS): "
+set "filename="
+set "starttime="
+set "endtime="
+set /p "filename= Video file name (with extension): "
+if "!filename!"=="" (
+    color 0C
+    echo      No file name - cancelled.
+    timeout /t 2 >nul
+    goto menu
+)
+set /p "starttime=      Start time (HH:MM:SS): "
+set /p "endtime=      End time   (HH:MM:SS): "
 
-ffmpeg -i "%filename%" -ss %starttime% -to %endtime% -progress "progress.txt" -nostats -c copy "cut_%filename%"
+ffmpeg -hide_banner -loglevel error -i "!filename!" -ss !starttime! -to !endtime! -progress "progress.txt" -nostats -c copy -y "cut_!filename!"
 call :show_progress
 
-echo Video cut saved as cut_%filename%!
-pause
+color 0A
+echo.
+echo      Saved: cut_!filename!
+call :pause_menu
 goto menu
 
 :gif_converter
-cls
-echo =============================
-echo  Video to GIF Converter
-echo =============================
-echo Purpose: Convert a segment of a video into a GIF.
-echo How to Use:
-echo 1. Enter the full name of the video file (e.g., example.mkv).
-echo 2. Input the start time in HH:MM:SS format (e.g., 00:01:30).
-echo 3. Specify the duration in seconds (e.g., 5 for a 5-second GIF).
-echo 4. A GIF named "output_example.gif" will be created from the specified segment.
+color 0E
+call :section_header "VIDEO TO GIF"
+echo      Segment to GIF: fps=10, scale=320px wide. Output: output_name.gif
 echo.
-set /p gifvid="Enter the video file name (with extension): "
-set /p gifstart="Enter the start time (format HH:MM:SS): "
-set /p gifduration="Enter the duration in seconds: "
+set "gifvid="
+set "gifstart="
+set "gifduration="
+set /p "gifvid=      Video file name (with extension): "
+if "!gifvid!"=="" (
+    color 0C
+    echo      No file name - cancelled.
+    timeout /t 2 >nul
+    goto menu
+)
+set /p "gifstart=      Start time (HH:MM:SS): "
+set /p "gifduration=      Duration (seconds): "
 
-ffmpeg -i "%gifvid%" -ss %gifstart% -t %gifduration% -vf "fps=10,scale=320:-1:flags=lanczos" -progress "progress.txt" -nostats -c:v gif "output_%gifvid%.gif"
+ffmpeg -hide_banner -loglevel error -i "!gifvid!" -ss !gifstart! -t !gifduration! -vf "fps=10,scale=320:-1:flags=lanczos" -progress "progress.txt" -nostats -c:v gif -y "output_!gifvid!.gif"
 call :show_progress
 
-echo GIF created: output_%gifvid%.gif
-pause
+color 0A
+echo.
+echo      Saved: output_!gifvid!.gif
+call :pause_menu
 goto menu
 
+:section_header
+cls
+echo.
+echo    ----------------------------------------------------------------------------------
+echo      %~1
+echo    ----------------------------------------------------------------------------------
+echo.
+exit /b 0
 
+:show_progress
+if exist progress.txt del /q progress.txt >nul 2>&1
+exit /b 0
 
+:pause_menu
+echo    Press any key to return to the menu . . .
+pause >nul
+exit /b 0
+
+:exit_app
+color 07
+popd 2>nul
+endlocal
+exit /b 0
