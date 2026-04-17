@@ -5,7 +5,7 @@ Windows batch menu for common **FFmpeg** tasks: batch resize, join clips, trim w
 ## Requirements
 
 - **Windows** (batch file uses `choice`, `cmd` features)
-- **[FFmpeg](https://ffmpeg.org/)** installed and available on your `PATH` (so `ffmpeg` runs from any command prompt)
+- **[FFmpeg](https://ffmpeg.org/)** installed and on your **system `PATH`** (the script runs `where ffmpeg` at startup and exits with a short message if it is missing)
 
 ## How to run
 
@@ -18,21 +18,22 @@ The script uses `pushd` to the script directory when you double-click it, so rel
 
 | Key | Tool | What it does |
 |-----|------|----------------|
-| **1** | Batch resize | Converts every `.mkv` and `.mp4` in the folder to a chosen resolution. Output: `basename_PRESET.ext` (e.g. `vacation_1080p.mkv`). Presets: 4K (3840×2160), 1080p, 720p, 360p. |
-| **2** | Join videos | Concatenates clips with **stream copy** (`-c copy`). Modes: numbered files `1.ext` … `N.ext`, or all `.mkv` files in A–Z order. Builds `joinlist.txt`, then outputs a name you choose (default `vc_joined.mkv`). **Clips should use the same codec/settings** for reliable joins. |
-| **3** | Trim / cut | Fast cut with stream copy. You enter source file, start and end as `HH:MM:SS`. Output: `basename_clip_START_to_END.ext` (colons in times become hyphens in the filename). |
-| **4** | Clip to GIF | Exports a segment to GIF: small (240px, 8 fps), medium (320px, 10 fps), or large (480px, 12 fps). Output: `basename_gif_PRESET_Xs.gif`. |
+| **1** | Batch resize | Re-encodes every `.mkv` and `.mp4` in the folder. Each preset is a **maximum** size (4K 3840×2160, 1080p, 720p, 360p); **aspect ratio is kept** (fits inside the box; no stretching). Output: `basename_PRESET.ext` (e.g. `vacation_1080p.mkv`). If any file fails, you get a warning after the batch. |
+| **2** | Join videos | Concatenates clips with **stream copy** (`-c copy`). Modes: numbered files `1.ext` … `N.ext`, or all `.mkv` files in A–Z order. Builds `joinlist.txt`, then outputs a name you choose (default `vc_joined.mkv`). **Clips should use the same codec/settings** for reliable joins. On failure, the script shows the FFmpeg exit code and a hint. |
+| **3** | Trim / cut | Fast cut with stream copy. You enter source file, start and end as `HH:MM:SS`. Output: `basename_clip_START_to_END.ext` (colons in times become hyphens in the filename). Failures are reported with an exit code. |
+| **4** | Clip to GIF | Exports a segment to GIF: small (240px, 8 fps), medium (320px, 10 fps), or large (480px, 12 fps). Output: `basename_gif_PRESET_Xs.gif`. Failures are reported with an exit code. |
 | **5** | Exit | Closes the menu. |
 
 ## Temporary files
 
 - **`progress.txt`** — written during FFmpeg runs and removed when each step finishes.
-- **`joinlist.txt`** — created for join, then deleted after a successful join.
+- **`joinlist.txt`** — built for **Join**, then removed after the join step runs (success or failure).
 
 ## Tips
 
 - For **join**, prefer identical resolution, frame rate, and codecs across segments.
 - **Resize** and **GIF** re-encode video; **join** and **trim** use copy when possible for speed and no generational loss.
+- With `-loglevel error`, FFmpeg may print little detail; if something fails, recheck file names, timecodes, and that inputs are valid for **stream copy** where used.
 
 ## License
 
