@@ -18,10 +18,10 @@ The script uses `pushd` to the script directory when you double-click it, so rel
 
 | Key | Tool | What it does |
 |-----|------|----------------|
-| **1** | Batch resize | Re-encodes every `.mkv` and `.mp4` in the folder. Each preset is a **maximum** size (4K 3840×2160, 1080p, 720p, 360p); **aspect ratio is kept** (fits inside the box; no stretching). Output: `basename_PRESET.ext` (e.g. `vacation_1080p.mkv`). If any file fails, you get a warning after the batch. |
+| **1** | Batch resize | Re-encodes every `.mkv` and `.mp4` in the folder. Each preset is a **maximum** size (4K 3840×2160, 1080p, 720p, 360p); **aspect ratio is kept** (fits inside the box; no stretching). Output: `basename_converted.ext` (e.g. `vacation_converted.mkv`). If any file fails, you get a warning after the batch. |
 | **2** | Join videos | Concatenates clips with **stream copy** (`-c copy`). Modes: numbered files `1.ext` … `N.ext`, or all `.mkv` files in A–Z order. Builds `joinlist.txt`, then outputs a name you choose (default `vc_joined.mkv`). **Clips should use the same codec/settings** for reliable joins. On failure, the script shows the FFmpeg exit code and a hint. |
-| **3** | Trim / cut | Fast cut with stream copy. You enter source file, start and end as `HH:MM:SS`. Output: `basename_clip_START_to_END.ext` (colons in times become hyphens in the filename). Failures are reported with an exit code. |
-| **4** | Clip to GIF | Exports a segment to GIF: small (240px, 8 fps), medium (320px, 10 fps), or large (480px, 12 fps). Output: `basename_gif_PRESET_Xs.gif`. Failures are reported with an exit code. |
+| **3** | Trim / cut | Fast cut with stream copy. You enter source file, start and end as `HH:MM:SS`. Output: `basename_converted.ext`. Failures are reported with an exit code. |
+| **4** | Clip to GIF | Exports a segment to GIF: small (240px, 8 fps), medium (320px, 10 fps), or large (480px, 12 fps). Output: `basename_converted.gif`. Failures are reported with an exit code. |
 | **5** | Exit | Closes the menu. |
 
 ## Temporary files

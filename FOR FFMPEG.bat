@@ -41,10 +41,10 @@ echo   FFMPEG VIDEO TOOLS
 echo      Batch resize, join, trim, or export GIFs. Output names use clear suffixes.
 echo    __________________________________________________________________________________
 echo.
-echo      [1]  Batch resize     - all .mkv / .mp4  -^>  name_1080p.ext  ^(preset in name^)
+echo      [1]  Batch resize     - all .mkv / .mp4  -^>  name_converted.ext
 echo      [2]  Join videos     - numbered clips OR all .mkv A-Z  -^>  your_name.mkv
-echo      [3]  Trim / cut      - stream copy  -^>  name_clip_start_to_end.ext
-echo      [4]  Clip to GIF     - pick size preset  -^>  name_gif_preset_12s.gif
+echo      [3]  Trim / cut      - stream copy  -^>  name_converted.ext
+echo      [4]  Clip to GIF     - pick size preset  -^>  name_converted.gif
 echo      [5]  Exit
 echo.
 echo    __________________________________________________________________________________
@@ -53,7 +53,7 @@ exit /b 0
 :tool_resize
 color 0E
 call :section_header "BATCH RESIZE"
-echo      Output pattern:  basename_PRESET.ext   ^(e.g. vacation_1080p.mkv^)
+echo      Output pattern:  basename_converted.ext   ^(e.g. vacation_converted.mkv^)
 echo      Presets fit inside W x H ^(aspect kept; no stretch^)
 echo.
 choice /c UHMLB /n /m "  [U] 4K 3840x2160   [H] 1080p   [M] 720p   [L] 360p   [B] Back : "
@@ -68,7 +68,7 @@ echo      Folder:  %CD%
 echo.
 set "resizeHadErr=0"
 for %%A in (*.mkv *.mp4) do (
-    set "resizeOut=%%~nA_!presetName!%%~xA"
+    set "resizeOut=%%~nA_converted%%~xA"
     echo      --- %%A  -^>  !resizeOut! ---
     ffmpeg -hide_banner -loglevel error -i "%%A" -vf "scale=!scaleFilter!" -progress "progress.txt" -nostats -y "!resizeOut!"
     if errorlevel 1 set "resizeHadErr=1"
@@ -81,7 +81,7 @@ if "!resizeHadErr!"=="1" (
 ) else (
     color 0A
     echo.
-    echo      Done. Files named like:  basename_!presetName!.ext
+    echo      Done. Files named like:  basename_converted.ext
 )
 call :pause_menu
 goto menu
@@ -149,7 +149,7 @@ goto menu
 :tool_cut
 color 0E
 call :section_header "TRIM / CUT"
-echo      Fast stream copy. Output:  basename_clip_start_to_end.ext  ^(times use - not :^)
+echo      Fast stream copy. Output:  basename_converted.ext
 echo.
 set "cutSource="
 set "cutStart="
@@ -164,9 +164,7 @@ if "!cutSource!"=="" (
 set /p "cutStart=      Start time (HH:MM:SS): "
 set /p "cutEnd=      End time   (HH:MM:SS): "
 
-set "cutStartSafe=!cutStart::=-!"
-set "cutEndSafe=!cutEnd::=-!"
-for %%I in ("!cutSource!") do set "cutOutput=%%~nI_clip_!cutStartSafe!_to_!cutEndSafe!%%~xI"
+for %%I in ("!cutSource!") do set "cutOutput=%%~nI_converted%%~xI"
 
 ffmpeg -hide_banner -loglevel error -i "!cutSource!" -ss !cutStart! -to !cutEnd! -progress "progress.txt" -nostats -c copy -y "!cutOutput!"
 set "cutFfErr=%errorlevel%"
@@ -188,7 +186,7 @@ goto menu
 :tool_gif
 color 0E
 call :section_header "CLIP TO GIF"
-echo      Output:  basename_gif_PRESET_DURATIONs.gif
+echo      Output:  basename_converted.gif
 echo.
 choice /c SMLB /n /m "  [S] Small 240px 8fps   [M] Medium 320px 10fps   [L] Large 480px 12fps   [B] Back : "
 if errorlevel 4 goto menu
@@ -209,7 +207,7 @@ if "!gifSource!"=="" (
 set /p "gifStart=      Start time (HH:MM:SS): "
 set /p "gifSeconds=      Duration (seconds): "
 
-for %%G in ("!gifSource!") do set "gifOutput=%%~nG_gif_!gifPreset!_!gifSeconds!s.gif"
+for %%G in ("!gifSource!") do set "gifOutput=%%~nG_converted.gif"
 
 ffmpeg -hide_banner -loglevel error -i "!gifSource!" -ss !gifStart! -t !gifSeconds! -vf "!gifVf!" -progress "progress.txt" -nostats -c:v gif -y "!gifOutput!"
 set "gifFfErr=%errorlevel%"
