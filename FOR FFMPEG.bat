@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableDelayedExpansion
 title FFmpeg Video Tools
-mode con: cols=90 lines=32
+mode con: cols=90 lines=42
 
 :: Run from this script's folder so relative paths work when double-clicked
 pushd "%~dp0" 2>nul
@@ -12,7 +12,8 @@ if errorlevel 1 (
     cls
     echo.
     echo   FFmpeg was not found in PATH.
-    echo   Install FFmpeg and add its bin folder to your system PATH, then run this again.
+    echo   This menu does not install FFmpeg. Download a Windows build, unzip it, then add
+    echo   the folder that contains ffmpeg.exe to your system PATH and open a NEW console.
     echo   https://ffmpeg.org/download.html
     echo.
     pause
@@ -37,15 +38,20 @@ goto menu
 echo.
 echo    __________________________________________________________________________________
 echo.
-echo   FFMPEG VIDEO TOOLS
-echo      Batch resize, join, trim, or export GIFs. Output names use clear suffixes.
+echo   FFMPEG VIDEO TOOLS   ^(needs FFmpeg installed and on your PATH^)
 echo    __________________________________________________________________________________
 echo.
-echo      [1]  Batch resize     - all .mkv / .mp4  -^>  name_converted.ext
-echo      [2]  Join videos     - numbered clips OR all .mkv A-Z  -^>  your_name.mkv
-echo      [3]  Trim / cut      - stream copy  -^>  name_converted.ext
-echo      [4]  Clip to GIF     - pick size preset  -^>  name_converted.gif
-echo      [5]  Exit
+echo      FIRST-TIME / HOW TO USE THIS MENU
+echo        * Keep this .bat in the SAME FOLDER as your videos ^(double-click it there^).
+echo        * Press a number key 1-5 when asked. Each tool shows extra help on its screen.
+echo        * New files are named:  yourfile_converted.ext   ^(originals are not deleted^).
+echo        * Join ^(option 2^) is different: YOU choose the output filename ^(e.g. final.mkv^).
+echo.
+echo      [1]  Batch resize   Re-encode every .mkv and .mp4 here -^>  name_converted.ext
+echo      [2]  Join videos    Glue clips together ^(same codec^) -^>  filename YOU type
+echo      [3]  Trim / cut     Copy out a time range fast -^>  name_converted.ext
+echo      [4]  Clip to GIF    Short animated GIF from part of a video -^>  name_converted.gif
+echo      [5]  Exit           Close this menu
 echo.
 echo    __________________________________________________________________________________
 exit /b 0
@@ -53,15 +59,18 @@ exit /b 0
 :tool_resize
 color 0E
 call :section_header "BATCH RESIZE"
-echo      Output pattern:  basename_converted.ext   ^(e.g. vacation_converted.mkv^)
-echo      Presets fit inside W x H ^(aspect kept; no stretch^)
+echo      WHAT THIS DOES
+echo        - Processes every .mkv and .mp4 in THIS folder ^(not subfolders^).
+echo        - Writes NEW files:  vacation.mkv  becomes  vacation_converted.mkv
+echo        - If name_converted already exists, it is overwritten. Your original stays.
+echo      SIZE PRESETS  ^(video fits inside the box; aspect ratio kept; no stretching^)
 echo.
 choice /c UHMLB /n /m "  [U] 4K 3840x2160   [H] 1080p   [M] 720p   [L] 360p   [B] Back : "
 if errorlevel 5 goto menu
-if errorlevel 4 set "scaleFilter=640:360:force_original_aspect_ratio=decrease" & set "presetName=360p"
-if errorlevel 3 set "scaleFilter=1280:720:force_original_aspect_ratio=decrease" & set "presetName=720p"
-if errorlevel 2 set "scaleFilter=1920:1080:force_original_aspect_ratio=decrease" & set "presetName=1080p"
-if errorlevel 1 set "scaleFilter=3840:2160:force_original_aspect_ratio=decrease" & set "presetName=2160p"
+if errorlevel 4 set "scaleFilter=640:360:force_original_aspect_ratio=decrease"
+if errorlevel 3 set "scaleFilter=1280:720:force_original_aspect_ratio=decrease"
+if errorlevel 2 set "scaleFilter=1920:1080:force_original_aspect_ratio=decrease"
+if errorlevel 1 set "scaleFilter=3840:2160:force_original_aspect_ratio=decrease"
 
 echo.
 echo      Folder:  %CD%
@@ -89,7 +98,14 @@ goto menu
 :tool_join
 color 0E
 call :section_header "JOIN VIDEOS"
-echo      Builds a concat list, then ffmpeg -c copy ^(same codec required^).
+echo      WHAT THIS DOES
+echo        - Plays clips one after another into ONE file ^(no re-encode: -c copy^).
+echo        - All parts should match ^(same resolution, codec, frame rate^) or join may fail.
+echo      TWO WAYS TO ORDER CLIPS
+echo        [N] Numbered: name files 1.mkv, 2.mkv, ... up to N.mkv in THIS folder.
+echo            You will type N ^(highest number^) and the extension ^(mkv is default^).
+echo        [A] All .mkv: joins every .mkv here in A-Z filename order ^(check names first!^).
+echo      At the end you TYPE the output name ^(example: my_movie.mkv^).
 echo.
 choice /c NAB /n /m "  [N] Numbered 1.ext .. N.ext   [A] All .mkv A-Z   [B] Back : "
 if errorlevel 3 goto menu
@@ -124,6 +140,8 @@ if !joinCount! equ 0 (
 
 :join_run_ffmpeg
 echo.
+echo      OUTPUT FILE  ^(include extension: .mkv or .mp4^). Press Enter for default.
+echo.
 set "joinOutput="
 set /p "joinOutput=      Output filename [vc_joined.mkv]: "
 if "!joinOutput!"=="" set "joinOutput=vc_joined.mkv"
@@ -149,7 +167,13 @@ goto menu
 :tool_cut
 color 0E
 call :section_header "TRIM / CUT"
-echo      Fast stream copy. Output:  basename_converted.ext
+echo      WHAT THIS DOES
+echo        - Saves ONLY the part between start and end time ^(fast stream copy^).
+echo        - Output name is always:  yourfile_converted.ext  ^(same folder as source^).
+echo      HOW TO FILL IN THE PROMPTS
+echo        - Video file: type the name you see in the folder ^(e.g. clip.mp4^).
+echo          Or paste a full path if the file is somewhere else.
+echo        - Times use  HH:MM:SS  ^(examples: 0:00:05  or  00:01:30^). Start must be before end.
 echo.
 set "cutSource="
 set "cutStart="
@@ -186,13 +210,19 @@ goto menu
 :tool_gif
 color 0E
 call :section_header "CLIP TO GIF"
-echo      Output:  basename_converted.gif
+echo      WHAT THIS DOES
+echo        - Makes an animated GIF from part of your video ^(re-encodes that part^).
+echo        - Output:  yourfile_converted.gif
+echo      STEPS
+echo        1^) Pick size/quality below ^(S=smallest file, L=bigger/clearer^).
+echo        2^) Type video filename, start time HH:MM:SS, then LENGTH in SECONDS ^(not end time^).
+echo      TIP: Keep duration small ^(a few seconds^); long GIFs get very large.
 echo.
 choice /c SMLB /n /m "  [S] Small 240px 8fps   [M] Medium 320px 10fps   [L] Large 480px 12fps   [B] Back : "
 if errorlevel 4 goto menu
-if errorlevel 3 set "gifVf=fps=12,scale=480:-1:flags=lanczos" & set "gifPreset=large"
-if errorlevel 2 set "gifVf=fps=10,scale=320:-1:flags=lanczos" & set "gifPreset=medium"
-if errorlevel 1 set "gifVf=fps=8,scale=240:-1:flags=lanczos" & set "gifPreset=small"
+if errorlevel 3 set "gifVf=fps=12,scale=480:-1:flags=lanczos"
+if errorlevel 2 set "gifVf=fps=10,scale=320:-1:flags=lanczos"
+if errorlevel 1 set "gifVf=fps=8,scale=240:-1:flags=lanczos"
 
 set "gifSource="
 set "gifStart="
