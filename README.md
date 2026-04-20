@@ -14,6 +14,8 @@ Windows batch menu for common **FFmpeg** tasks: batch resize, join clips, trim w
 
 The script uses `pushd` to the script directory when you double-click it, so relative paths are based on where the `.bat` file lives.
 
+**Step-by-step guide for new users:** see [INSTRUCTIONS.md](INSTRUCTIONS.md).
+
 ## Menu options
 
 | Key | Tool | What it does |
