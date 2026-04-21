@@ -1,6 +1,6 @@
 # Instructions — FFmpeg Video Tools (`FOR FFMPEG.bat`)
 
-This guide is for **first-time users** of the Windows batch menu. The script itself also shows short hints on each screen.
+This guide is for **first-time users** of the Windows batch menu. The `.bat` file shows a **“FIRST-TIME / HOW TO USE THIS MENU”** block on the main screen and **“WHAT THIS DOES”** (or similar) text inside each tool, so you can rely on the window alone or use this document for more detail.
 
 ---
 
@@ -19,7 +19,7 @@ This guide is for **first-time users** of the Windows batch menu. The script its
 3. Add the **folder that directly contains** `ffmpeg.exe` to your user or system PATH (Windows: *Settings → System → About → Advanced system settings → Environment Variables → Path → Edit*).
 4. Confirm in a **new** terminal: run `ffmpeg -version`. If that works, the menu will start normally.
 
-If FFmpeg is missing, the script stops with a red message and a pause so you can read it.
+If FFmpeg is missing, the script clears the screen, prints in red that FFmpeg was **not** found in `PATH`, reminds you that **this menu does not install FFmpeg**, tells you to add the folder that contains `ffmpeg.exe` to `PATH` and open a **new** console, links to [ffmpeg.org/download](https://ffmpeg.org/download.html), then pauses so you can read it.
 
 ---
 
@@ -41,7 +41,15 @@ If FFmpeg is missing, the script stops with a red message and a pause so you can
 2. At the main menu, press **1**, **2**, **3**, **4**, or **5** when prompted (single key).
 3. **5** exits. **B** (where offered) goes **back** to the main menu without running FFmpeg.
 
-The window is sized for the built-in help text (about 90×42 characters).
+**Shortcut keys inside tools** (also shown on each screen):
+
+| Screen | Keys |
+|--------|------|
+| Batch resize | **U** 4K, **H** 1080p, **M** 720p, **L** 360p, **B** back |
+| Join | **N** numbered clips, **A** all `.mkv` A–Z, **B** back |
+| Clip to GIF | **S** small, **M** medium, **L** large, **B** back |
+
+The window is sized for the built-in help text (**90 columns × 42 lines**).
 
 ---
 
@@ -59,7 +67,7 @@ The window is sized for the built-in help text (about 90×42 characters).
 
 ## 5. Option 1 — Batch resize
 
-**What it does:** re-encodes every **`.mkv`** and **`.mp4`** in the current folder to fit inside a chosen maximum size. **Aspect ratio is preserved** (no stretching; video fits inside the box).
+**What it does:** re-encodes every **`.mkv`** and **`.mp4`** in the **current folder only** (videos in subfolders are **not** included) to fit inside a chosen maximum size. **Aspect ratio is preserved** (no stretching; video fits inside the box).
 
 **Steps:**
 
@@ -148,5 +156,6 @@ You can ignore them unless you are debugging. Do not delete them **while** FFmpe
 
 ## 11. Related files
 
-- **README.md** — short project overview and requirements.
-- **FOR FFMPEG.bat** — the actual menu (authoritative for keys and behavior if this doc ever drifts).
+- **README.md** — short project overview, requirements, and menu summary.
+- **INSTRUCTIONS.md** — this file (step-by-step usage).
+- **FOR FFMPEG.bat** — the actual menu (authoritative for keys and behavior if any doc drifts).
