@@ -1,48 +1,63 @@
 # videoConverter
 
-Windows batch menu for common **FFmpeg** tasks: batch resize, join clips, trim with stream copy, and export short GIFs. Put your videos in the same folder as the script (or run the script from that folder) and pick an option from the console menu.
+Small **Windows** helper: a console menu around **FFmpeg** for batch resize, joining clips, stream-copy trims, and short **GIF** exports. Main script: **`FOR FFMPEG.bat`**.
 
-The menu includes **on-screen tips** for new users (main screen + each tool). For a full walkthrough, open [INSTRUCTIONS.md](INSTRUCTIONS.md).
+The menu shows **on-screen tips** on the home screen and inside each tool. For a full step-by-step guide, see **[INSTRUCTIONS.md](INSTRUCTIONS.md)**.
+
+## Repository layout
+
+| Item | Purpose |
+|------|---------|
+| `FOR FFMPEG.bat` | Run this. Switches to its own folder when double-clicked. |
+| [INSTRUCTIONS.md](INSTRUCTIONS.md) | Detailed usage, FFmpeg install, troubleshooting. |
+| `README.md` | This overview. |
 
 ## Requirements
 
-- **Windows** (batch file uses `choice`, `cmd` features)
-- **[FFmpeg](https://ffmpeg.org/)** on your **system `PATH`**. On startup the script runs `where ffmpeg`; if it fails, you get a red message explaining that FFmpeg is not bundled and to fix PATH, then open a **new** console.
-- **Console window** — the script sets the window to about **90×42** characters so the built-in help fits.
+- **Windows** — uses `choice` and classic batch features.
+- **[FFmpeg](https://ffmpeg.org/)** on your **`PATH`**. Startup runs `where ffmpeg`; if that fails, you get a red screen explaining FFmpeg is **not** bundled, to fix `PATH`, and to open a **new** terminal ([download](https://ffmpeg.org/download.html)).
+- **Console** — resized to about **90×42** so in-app help fits.
 
 ## How to run
 
-1. Copy `FOR FFMPEG.bat` next to your video files, **or** open a command prompt, `cd` to your media folder, and run the batch file with its full path.
-2. Double-click `FOR FFMPEG.bat`, or run it from the folder that contains your inputs.
+1. Put **`FOR FFMPEG.bat`** in the same folder as your videos (simplest), **or** `cd` to your media folder and run the `.bat` by full path.
+2. Double-click **`FOR FFMPEG.bat`**, then press **1**–**5** at the main prompt.
 
-The script uses `pushd` to the script directory when you double-click it, so relative paths are based on where the `.bat` file lives.
+When you double-click, `pushd` uses the script’s directory, so relative names are resolved from the folder that contains the `.bat`.
 
-**Step-by-step guide for new users:** see [INSTRUCTIONS.md](INSTRUCTIONS.md).
+## Output naming
 
-## Menu options
+| Tool | Output |
+|------|--------|
+| Resize, Trim | `originalname_converted` + same extension as the source |
+| GIF | `originalname_converted.gif` |
+| Join | **You choose** the filename (default suggestion `vc_joined.mkv`; include `.mkv` / `.mp4` / etc.). |
 
-Main menu: press **1**–**5**. Inside tools, **B** usually means **back** to the main menu without running FFmpeg.
+Original files are **not** deleted. An existing `*_converted*` file with the same base name is **overwritten** if you run the tool again.
 
-| Key | Tool | What it does |
-|-----|------|----------------|
-| **1** | Batch resize | Re-encodes every `.mkv` and `.mp4` in the **current folder only** (not subfolders). Presets (**U** 4K, **H** 1080p, **M** 720p, **L** 360p, **B** back): each is a **maximum** box; **aspect ratio is kept**. Output: `basename_converted.ext`. Warnings if any file in the batch fails. |
-| **2** | Join videos | **Stream copy** (`-c copy`). **N** = numbered `1.ext`…`N.ext`; **A** = all `.mkv` in A–Z order; **B** back. You type the output name (default `vc_joined.mkv`). **Same codec/settings** across clips is usually required. FFmpeg exit code shown on failure. |
-| **3** | Trim / cut | Stream copy from start to end `HH:MM:SS`. Output: `basename_converted.ext`. Full path to the source is allowed. Exit code on failure. |
-| **4** | Clip to GIF | **S** / **M** / **L** = small/medium/large preset (**B** back); then duration in **seconds** (not end time). Output: `basename_converted.gif`. Exit code on failure. |
-| **5** | Exit | Closes the menu. |
+## Menu (main keys **1**–**5**)
+
+Inside submenus, **B** usually returns to the main menu without running FFmpeg.
+
+| Key | Tool | Summary |
+|-----|------|---------|
+| **1** | Batch resize | All **`.mkv`** / **`.mp4`** in the **current folder only** (no subfolders). Presets: **U** 4K, **H** 1080p, **M** 720p, **L** 360p (**B** back). Fits inside max size; **aspect ratio kept**. → `name_converted.ext`. Warns if any file fails. |
+| **2** | Join | **`-c copy`**. **N** = `1.ext`…`N.ext`; **A** = all `.mkv` A–Z; **B** back. You type output name. Clips should **match** (codec, resolution, fps). Shows FFmpeg exit code on failure. |
+| **3** | Trim / cut | Stream copy from **start** to **end** (`HH:MM:SS`). Local name or **full path** to source. → `name_converted.ext`. |
+| **4** | Clip to GIF | **S** 240px @ 8 fps · **M** 320 @ 10 · **L** 480 @ 12 (**B** back). Then **duration in seconds** (not end time). → `name_converted.gif`. |
+| **5** | Exit | Quit. |
 
 ## Temporary files
 
-- **`progress.txt`** — written during FFmpeg runs and removed when each step finishes.
-- **`joinlist.txt`** — built for **Join**, then removed after the join step runs (success or failure).
+- **`progress.txt`** — during FFmpeg; removed after each step.
+- **`joinlist.txt`** — built for join; removed after the join attempt (success or failure).
 
 ## Tips
 
-- For **join**, prefer identical resolution, frame rate, and codecs across segments.
-- **Resize** and **GIF** re-encode video; **join** and **trim** use copy when possible for speed and no generational loss.
-- Re-running resize/trim/GIF overwrites an existing `*_converted*` file with the same base name; originals are never deleted by this script.
-- With `-loglevel error`, FFmpeg may print little detail; if something fails, recheck file names, timecodes, and that inputs are valid for **stream copy** where used.
+- **Join:** identical resolution, frame rate, and codecs across parts works best with stream copy.
+- **Resize** and **GIF** re-encode; **join** and **trim** use copy where possible (fast, no extra quality loss).
+- Logs use **`-loglevel error`** — if something fails, double-check paths, timecodes, and stream-copy compatibility; run FFmpeg manually for verbose output if needed.
 
 ## License
 
-No license is specified in this repository; treat as personal/use-at-your-own-risk unless you add one.
+No license is specified in this repository; treat as personal / use at your own risk unless you add one.
