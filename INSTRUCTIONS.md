@@ -158,4 +158,5 @@ You can ignore them unless you are debugging. Do not delete them **while** FFmpe
 
 - **README.md** — short project overview, requirements, and menu summary.
 - **INSTRUCTIONS.md** — this file (step-by-step usage).
+- **[FUTURE_IMPROVEMENTS.md](FUTURE_IMPROVEMENTS.md)** — possible enhancements and backlog ideas (not a commitment to build them).
 - **FOR FFMPEG.bat** — the actual menu (authoritative for keys and behavior if any doc drifts).
