@@ -10,6 +10,7 @@ The menu shows **on-screen tips** on the home screen and inside each tool. For a
 |------|---------|
 | `FOR FFMPEG.bat` | Run this. Switches to its own folder when double-clicked. |
 | [INSTRUCTIONS.md](INSTRUCTIONS.md) | Detailed usage, FFmpeg install, troubleshooting. |
+| [FUTURE_IMPROVEMENTS.md](FUTURE_IMPROVEMENTS.md) | Ideas and possible enhancements (backlog, not a promise). |
 | `README.md` | This overview. |
 
 ## Requirements
