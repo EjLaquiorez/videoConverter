@@ -279,24 +279,25 @@ echo    ------------------------------------------------------------------------
 echo.
 exit /b 0
 
+:: Refined palette (black bg): calm default, blue headers, gray help, cyan prompts, soft green/red results
 :color_main
-color 0B
+color 07
 exit /b 0
 
 :color_title
-color 0D
-exit /b 0
-
-:color_info
 color 09
 exit /b 0
 
+:color_info
+color 08
+exit /b 0
+
 :color_prompt
-color 0E
+color 0B
 exit /b 0
 
 :color_run
-color 07
+color 08
 exit /b 0
 
 :color_success
