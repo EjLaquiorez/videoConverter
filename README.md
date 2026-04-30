@@ -1,63 +1,89 @@
 # videoConverter
 
-Small **Windows** helper: a console menu around **FFmpeg** for batch resize, joining clips, stream-copy trims, and short **GIF** exports. Main script: **`FOR FFMPEG.bat`**.
+This is a simple **video helper** for your PC: resize many videos at once, glue clips together, cut out a section, or make a short **GIF**. Everything runs from one Windows file: **`FOR FFMPEG.bat`**.
 
-The menu shows **on-screen tips** on the home screen and inside each tool. For a full step-by-step guide, see **[INSTRUCTIONS.md](INSTRUCTIONS.md)**.
+You do **not** need to memorize FFmpeg commands—the black window walks you through choices and shows short tips. For full **step-by-step** instructions and install help, open **[INSTRUCTIONS.md](INSTRUCTIONS.md)**.
 
-## Repository layout
+---
 
-| Item | Purpose |
-|------|---------|
-| `FOR FFMPEG.bat` | Run this. Switches to its own folder when double-clicked. |
-| [INSTRUCTIONS.md](INSTRUCTIONS.md) | Detailed usage, FFmpeg install, troubleshooting. |
-| [FUTURE_IMPROVEMENTS.md](FUTURE_IMPROVEMENTS.md) | Ideas and possible enhancements (backlog, not a promise). |
-| `README.md` | This overview. |
+## Before you start (two things)
 
-## Requirements
+1. **Windows** — This project is built for normal Windows (the kind that opens a black “Command Prompt” style window).
 
-- **Windows** — uses `choice` and classic batch features.
-- **[FFmpeg](https://ffmpeg.org/)** on your **`PATH`**. Startup runs `where ffmpeg`; if that fails, you get a red screen explaining FFmpeg is **not** bundled, to fix `PATH`, and to open a **new** terminal ([download](https://ffmpeg.org/download.html)).
-- **Console** — resized to about **90×42** so in-app help fits.
+2. **FFmpeg** — This is **free software** that does the actual video work. You must **install it yourself** and put it on your computer’s **PATH** (so Windows can find `ffmpeg` when you run the menu).  
+   - The menu **does not** install FFmpeg for you.  
+   - If FFmpeg is missing, you will see a **red** message; fix PATH, then open a **new** window and try again.  
+   - Help: [FFmpeg download](https://ffmpeg.org/download.html).
 
-## How to run
+---
 
-1. Put **`FOR FFMPEG.bat`** in the same folder as your videos (simplest), **or** `cd` to your media folder and run the `.bat` by full path.
-2. Double-click **`FOR FFMPEG.bat`**, then press **1**–**5** at the main prompt.
+## Getting started (easy path)
 
-When you double-click, `pushd` uses the script’s directory, so relative names are resolved from the folder that contains the `.bat`.
+1. **Install FFmpeg** and confirm it works (open Command Prompt, type `ffmpeg -version` and press Enter—you should see version text, not “not recognized”).
 
-## Output naming
+2. Put **`FOR FFMPEG.bat`** in the **same folder** as your videos (for example your `Downloads` or a folder named `Videos`).  
+   *That is the simplest way: double-click the `.bat` there and it looks for files in that folder.*
 
-| Tool | Output |
-|------|--------|
-| Resize, Trim | `originalname_converted` + same extension as the source |
-| GIF | `originalname_converted.gif` |
-| Join | **You choose** the filename (default suggestion `vc_joined.mkv`; include `.mkv` / `.mp4` / etc.). |
+3. **Double-click** `FOR FFMPEG.bat`. A menu appears.
 
-Original files are **not** deleted. An existing `*_converted*` file with the same base name is **overwritten** if you run the tool again.
+4. Press a number on your keyboard (**1**–**5**) when the menu asks you to. Read the lines on the screen—each tool explains what to type next.
 
-## Menu (main keys **1**–**5**)
+To leave the menu, choose **5** (Exit). Inside a tool, **B** usually means **Back** to the home menu without running a job.
 
-Inside submenus, **B** usually returns to the main menu without running FFmpeg.
+---
 
-| Key | Tool | Summary |
-|-----|------|---------|
-| **1** | Batch resize | All **`.mkv`** / **`.mp4`** in the **current folder only** (no subfolders). Presets: **U** 4K, **H** 1080p, **M** 720p, **L** 360p (**B** back). Fits inside max size; **aspect ratio kept**. → `name_converted.ext`. Warns if any file fails. |
-| **2** | Join | **`-c copy`**. **N** = `1.ext`…`N.ext`; **A** = all `.mkv` A–Z; **B** back. You type output name. Clips should **match** (codec, resolution, fps). Shows FFmpeg exit code on failure. |
-| **3** | Trim / cut | Stream copy from **start** to **end** (`HH:MM:SS`). Local name or **full path** to source. → `name_converted.ext`. |
-| **4** | Clip to GIF | **S** 240px @ 8 fps · **M** 320 @ 10 · **L** 480 @ 12 (**B** back). Then **duration in seconds** (not end time). → `name_converted.gif`. |
-| **5** | Exit | Quit. |
+## Where your new files go (names)
 
-## Temporary files
+| What you did | What the new file is usually called |
+|--------------|-------------------------------------|
+| Resize or trim | Same name as before, plus **`_converted`**, and the **same type** (e.g. `trip.mp4` → `trip_converted.mp4`) |
+| GIF | Same name plus **`_converted.gif`** (e.g. `trip_converted.gif`) |
+| Join several clips | **You type** the final name (suggested default: `vc_joined.mkv`). |
 
-- **`progress.txt`** — during FFmpeg; removed after each step.
-- **`joinlist.txt`** — built for join; removed after the join attempt (success or failure).
+**Your original files stay.** If you run the same tool again on the same file, it may **replace** the old `*_converted*` output—only that new file is overwritten, not your original.
 
-## Tips
+---
 
-- **Join:** identical resolution, frame rate, and codecs across parts works best with stream copy.
-- **Resize** and **GIF** re-encode; **join** and **trim** use copy where possible (fast, no extra quality loss).
-- Logs use **`-loglevel error`** — if something fails, double-check paths, timecodes, and stream-copy compatibility; run FFmpeg manually for verbose output if needed.
+## What each menu number does
+
+Think of **1–4** as four tools; **5** is quit.
+
+| Key | Plain-English summary |
+|-----|---------------------|
+| **1** — Resize | Makes **new** copies of every **`.mkv`** and **`.mp4`** in **this folder only** (not inside subfolders). You pick a size **preset** with letter keys (**U** very large, **H** 1080p, **M** 720p, **L** smaller, **B** back). Picture shape is **not** stretched. |
+| **2** — Join | Puts clips **one after another** into one file. Works best when all clips “match” (same kind of video settings). You can use **numbered** files (`1.mkv`, `2.mkv`, …) or **all `.mkv` files** here in A–Z name order. You type the **output** filename. |
+| **3** — Trim | Keeps only the part from a **start time** to an **end time** (like 0:01:00 to 0:02:30). You can type the file name or paste the **full path** to the video. |
+| **4** — GIF | Turns part of a video into an animated GIF. You pick **S / M / L** for smaller-or-larger GIF, then enter how many **seconds** long the GIF should be (not the end time). |
+| **5** — Exit | Close the program. |
+
+For letter shortcuts (**U/H/M/L**, **N/A**, **S/M/L**, **B**), follow the text at the bottom of each screen.
+
+---
+
+## Other files in this project
+
+| File | For beginners… |
+|------|------------------|
+| **INSTRUCTIONS.md** | Read this for **step-by-step** help, including FFmpeg on Windows. |
+| **FUTURE_IMPROVEMENTS.md** | Ideas for later—**not** something you must install. |
+| **README.md** | You are here—big-picture overview. |
+
+---
+
+## Small files the menu may create
+
+- **`progress.txt`** — Used while a job runs; the menu removes it when that step is done.  
+- **`joinlist.txt`** — Used when joining videos; removed after the join step.
+
+You can ignore them unless something went wrong and you are troubleshooting.
+
+---
+
+## Good to know
+
+- **Join** is picky: if clips were recorded differently, joining might fail until they are converted to match (the full guide explains more).
+- **Resize** and **GIF** take time because the video is processed again; **trim** and **join** try to be fast by copying data when possible.
+- If an error message is short, open **[INSTRUCTIONS.md](INSTRUCTIONS.md)** or run FFmpeg from a terminal yourself for more detail.
 
 ## License
 
