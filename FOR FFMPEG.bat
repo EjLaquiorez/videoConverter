@@ -3,6 +3,9 @@ setlocal EnableDelayedExpansion
 title FFmpeg Video Tools
 mode con: cols=90 lines=42
 
+set "VC_PROGRESS=progress.txt"
+set "VC_JOINLIST=joinlist.txt"
+
 :: Run from this script's folder so relative paths work when double-clicked
 pushd "%~dp0" 2>nul
 
@@ -57,13 +60,15 @@ echo.
 echo    __________________________________________________________________________________
 exit /b 0
 
+:: ---------- Batch resize ----------
+
 :tool_resize
 call :section_header "BATCH RESIZE"
 call :color_info
 echo      WHAT THIS DOES
 echo        - Processes every .mkv and .mp4 in THIS folder ^(not subfolders^).
 echo        - Writes NEW files:  vacation.mkv  becomes  vacation_converted.mkv
-echo        - If name_converted already exists, it is overwritten. Your original stays.
+echo        - If name_converted already exists, it is OVERWRITTEN. Your original stays.
 echo      SIZE PRESETS  ^(video fits inside the box; aspect ratio kept; no stretching^)
 echo.
 call :color_prompt
@@ -79,24 +84,34 @@ echo.
 echo      Folder:  %CD%
 echo.
 set "resizeHadErr=0"
+set "resizeCount=0"
 for %%A in (*.mkv *.mp4) do (
+    set /a resizeCount+=1
     set "resizeOut=%%~nA_converted%%~xA"
     echo      --- %%A  -^>  !resizeOut! ---
-    ffmpeg -hide_banner -loglevel error -i "%%A" -vf "scale=!scaleFilter!" -progress "progress.txt" -nostats -y "!resizeOut!"
+    ffmpeg -hide_banner -loglevel error -i "%%A" -vf "scale=!scaleFilter!" -progress "%VC_PROGRESS%" -nostats -y "!resizeOut!"
     if errorlevel 1 set "resizeHadErr=1"
     call :clean_progress
 )
-if "!resizeHadErr!"=="1" (
+if "!resizeCount!"=="0" (
     call :color_error
     echo.
-    echo      One or more resizes failed. Check FFmpeg output above.
+    echo      No .mkv or .mp4 files in this folder.
 ) else (
-    call :color_success
-    echo.
-    echo      Done. Files named like:  basename_converted.ext
+    if "!resizeHadErr!"=="1" (
+        call :color_error
+        echo.
+        echo      One or more resizes failed. Check FFmpeg output above.
+    ) else (
+        call :color_success
+        echo.
+        echo      Done. Files named like:  basename_converted.ext
+    )
 )
 call :pause_menu
 goto menu
+
+:: ---------- Join ----------
 
 :tool_join
 call :section_header "JOIN VIDEOS"
@@ -122,26 +137,26 @@ set "joinExt="
 call :color_prompt
 set /p "joinMax=      Highest index N ^(files 1 through N^): "
 if "!joinMax!"=="" (
-    call :color_error
-    echo      Cancelled.
-    timeout /t 2 >nul
+    call :show_err_short "Cancelled."
+    goto menu
+)
+echo !joinMax!| findstr /r "^[1-9][0-9]*$" >nul || (
+    call :show_err_short "N must be a positive whole number ^(1, 2, 3, ...^)."
     goto menu
 )
 set /p "joinExt=      Extension without dot [mkv]: "
 if "!joinExt!"=="" set "joinExt=mkv"
-(for /l %%i in (1,1,!joinMax!) do echo file '%%i.!joinExt!') > joinlist.txt
+(for /l %%i in (1,1,!joinMax!) do echo file '%%i.!joinExt!') > "%VC_JOINLIST%"
 goto join_run_ffmpeg
 
 :join_all_mkv
 set "joinCount=0"
 for %%A in (*.mkv) do set /a joinCount+=1
 if !joinCount! equ 0 (
-    call :color_error
-    echo      No .mkv files in this folder.
-    timeout /t 2 >nul
+    call :show_err_short "No .mkv files in this folder."
     goto menu
 )
-(for %%A in (*.mkv) do echo file '%%A') > joinlist.txt
+(for %%A in (*.mkv) do echo file '%%A') > "%VC_JOINLIST%"
 
 :join_run_ffmpeg
 call :color_info
@@ -154,11 +169,11 @@ set /p "joinOutput=      Output filename [vc_joined.mkv]: "
 if "!joinOutput!"=="" set "joinOutput=vc_joined.mkv"
 call :color_run
 echo      Joining to:  !joinOutput!
-ffmpeg -hide_banner -loglevel error -f concat -safe 0 -i joinlist.txt -c copy -progress "progress.txt" -nostats -y "!joinOutput!"
+ffmpeg -hide_banner -loglevel error -f concat -safe 0 -i "%VC_JOINLIST%" -c copy -progress "%VC_PROGRESS%" -nostats -y "!joinOutput!"
 set "joinFfErr=%errorlevel%"
 call :clean_progress
 
-del joinlist.txt 2>nul
+del "%VC_JOINLIST%" 2>nul
 if not "!joinFfErr!"=="0" (
     call :color_error
     echo.
@@ -171,6 +186,8 @@ echo.
 echo      Saved:  !joinOutput!
 call :pause_menu
 goto menu
+
+:: ---------- Trim ----------
 
 :tool_cut
 call :section_header "TRIM / CUT"
@@ -189,18 +206,24 @@ set "cutEnd="
 call :color_prompt
 set /p "cutSource=      Source video ^(with extension^): "
 if "!cutSource!"=="" (
-    call :color_error
-    echo      No file - cancelled.
-    timeout /t 2 >nul
+    call :show_err_short "No file - cancelled."
     goto menu
 )
 set /p "cutStart=      Start time (HH:MM:SS): "
 set /p "cutEnd=      End time   (HH:MM:SS): "
+if "!cutStart!"=="" (
+    call :show_err_short "Start time is required."
+    goto menu
+)
+if "!cutEnd!"=="" (
+    call :show_err_short "End time is required."
+    goto menu
+)
 
 for %%I in ("!cutSource!") do set "cutOutput=%%~nI_converted%%~xI"
 
 call :color_run
-ffmpeg -hide_banner -loglevel error -i "!cutSource!" -ss !cutStart! -to !cutEnd! -progress "progress.txt" -nostats -c copy -y "!cutOutput!"
+ffmpeg -hide_banner -loglevel error -i "!cutSource!" -ss "!cutStart!" -to "!cutEnd!" -progress "%VC_PROGRESS%" -nostats -c copy -y "!cutOutput!"
 set "cutFfErr=%errorlevel%"
 call :clean_progress
 
@@ -216,6 +239,8 @@ echo.
 echo      Saved:  !cutOutput!
 call :pause_menu
 goto menu
+
+:: ---------- GIF ----------
 
 :tool_gif
 call :section_header "CLIP TO GIF"
@@ -241,18 +266,25 @@ set "gifSeconds="
 call :color_prompt
 set /p "gifSource=      Source video ^(with extension^): "
 if "!gifSource!"=="" (
-    call :color_error
-    echo      No file - cancelled.
-    timeout /t 2 >nul
+    call :show_err_short "No file - cancelled."
     goto menu
 )
 set /p "gifStart=      Start time (HH:MM:SS): "
+if "!gifStart!"=="" set "gifStart=0:00:00"
 set /p "gifSeconds=      Duration (seconds): "
+if "!gifSeconds!"=="" (
+    call :show_err_short "Duration ^(seconds^) is required."
+    goto menu
+)
+echo !gifSeconds!| findstr /r "^[1-9][0-9]*$" >nul || (
+    call :show_err_short "Enter duration as a whole number of seconds ^(e.g. 5^), at least 1."
+    goto menu
+)
 
 for %%G in ("!gifSource!") do set "gifOutput=%%~nG_converted.gif"
 
 call :color_run
-ffmpeg -hide_banner -loglevel error -i "!gifSource!" -ss !gifStart! -t !gifSeconds! -vf "!gifVf!" -progress "progress.txt" -nostats -c:v gif -y "!gifOutput!"
+ffmpeg -hide_banner -loglevel error -i "!gifSource!" -ss "!gifStart!" -t "!gifSeconds!" -vf "!gifVf!" -progress "%VC_PROGRESS%" -nostats -c:v gif -y "!gifOutput!"
 set "gifFfErr=%errorlevel%"
 call :clean_progress
 
@@ -269,6 +301,8 @@ echo      Saved:  !gifOutput!
 call :pause_menu
 goto menu
 
+:: ---------- UI helpers ----------
+
 :section_header
 cls
 call :color_title
@@ -279,7 +313,7 @@ echo    ------------------------------------------------------------------------
 echo.
 exit /b 0
 
-:: Refined palette (black bg): calm default, blue headers, gray help, cyan prompts, soft green/red results
+:: Palette (black bg): default, blue headers, gray help, cyan prompts, soft green/red results
 :color_main
 color 07
 exit /b 0
@@ -312,8 +346,14 @@ exit /b 0
 color 07
 exit /b 0
 
+:show_err_short
+call :color_error
+echo      %~1
+timeout /t 2 >nul
+exit /b 0
+
 :clean_progress
-if exist progress.txt del /q progress.txt >nul 2>&1
+if exist "%VC_PROGRESS%" del /q "%VC_PROGRESS%" >nul 2>&1
 exit /b 0
 
 :pause_menu
