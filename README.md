@@ -1,89 +1,112 @@
 # videoConverter
 
-This is a simple **video helper** for your PC: resize many videos at once, glue clips together, cut out a section, or make a short **GIF**. Everything runs from one Windows file: **`FOR FFMPEG.bat`**.
+**One Windows batch menu** plus Markdown docs. It drives **FFmpeg** so you can resize batches of videos, join clips, trim by time, or export a short GIF—without typing long commands yourself.
 
-You do **not** need to memorize FFmpeg commands—the black window walks you through choices and shows short tips. For full **step-by-step** instructions and install help, open **[INSTRUCTIONS.md](INSTRUCTIONS.md)**.
-
----
-
-## Before you start (two things)
-
-1. **Windows** — This project is built for normal Windows (the kind that opens a black “Command Prompt” style window).
-
-2. **FFmpeg** — This is **free software** that does the actual video work. You must **install it yourself** and put it on your computer’s **PATH** (so Windows can find `ffmpeg` when you run the menu).  
-   - The menu **does not** install FFmpeg for you.  
-   - If FFmpeg is missing, you will see a **red** message; fix PATH, then open a **new** window and try again.  
-   - Help: [FFmpeg download](https://ffmpeg.org/download.html).
+| If you are… | Start here |
+|-------------|------------|
+| **New to the tool** | Read this page through **“Good to know”**, then open **[INSTRUCTIONS.md](INSTRUCTIONS.md)** for detailed install and usage steps. |
+| **Maintaining or changing the script** | Skim **For developers** below, then read **`FOR FFMPEG.bat`** (section comments mark each tool). Ideas backlog: **[FUTURE_IMPROVEMENTS.md](FUTURE_IMPROVEMENTS.md)**. |
 
 ---
 
-## Getting started (easy path)
+## What you run
 
-1. **Install FFmpeg** and confirm it works (open Command Prompt, type `ffmpeg -version` and press Enter—you should see version text, not “not recognized”).
+- **`FOR FFMPEG.bat`** — The only executable “app”. Double-click it or run it from a folder that contains your media (it `pushd`s to the script folder when launched from Explorer).
 
-2. Put **`FOR FFMPEG.bat`** in the **same folder** as your videos (for example your `Downloads` or a folder named `Videos`).  
-   *That is the simplest way: double-click the `.bat` there and it looks for files in that folder.*
-
-3. **Double-click** `FOR FFMPEG.bat`. A menu appears.
-
-4. Press a number on your keyboard (**1**–**5**) when the menu asks you to. Read the lines on the screen—each tool explains what to type next.
-
-To leave the menu, choose **5** (Exit). Inside a tool, **B** usually means **Back** to the home menu without running a job.
+Everything else is documentation.
 
 ---
 
-## Where your new files go (names)
+## Before you start
 
-| What you did | What the new file is usually called |
-|--------------|-------------------------------------|
-| Resize or trim | Same name as before, plus **`_converted`**, and the **same type** (e.g. `trip.mp4` → `trip_converted.mp4`) |
-| GIF | Same name plus **`_converted.gif`** (e.g. `trip_converted.gif`) |
-| Join several clips | **You type** the final name (suggested default: `vc_joined.mkv`). |
+1. **Windows** — Uses `cmd` features such as `choice` and `call :label`. Not intended for macOS/Linux as-is.
 
-**Your original files stay.** If you run the same tool again on the same file, it may **replace** the old `*_converted*` output—only that new file is overwritten, not your original.
+2. **FFmpeg on `PATH`** — The script runs `where ffmpeg` at startup. It **does not** ship or install FFmpeg. If FFmpeg is missing you get a **red** screen; fix **PATH**, then open a **new** terminal session. [FFmpeg download](https://ffmpeg.org/download.html).
 
 ---
 
-## What each menu number does
+## Getting started (beginners)
 
-Think of **1–4** as four tools; **5** is quit.
+1. Install FFmpeg and check **`ffmpeg -version`** in Command Prompt.
+2. Put **`FOR FFMPEG.bat`** in the **same folder** as your videos (simplest workflow).
+3. **Double-click** the `.bat` and use number keys **1**–**5** when prompted.
+4. Use **5** to exit. Inside a sub-tool, **B** usually means **Back** without running a job.
 
-| Key | Plain-English summary |
-|-----|---------------------|
-| **1** — Resize | Makes **new** copies of every **`.mkv`** and **`.mp4`** in **this folder only** (not inside subfolders). You pick a size **preset** with letter keys (**U** very large, **H** 1080p, **M** 720p, **L** smaller, **B** back). Picture shape is **not** stretched. |
-| **2** — Join | Puts clips **one after another** into one file. Works best when all clips “match” (same kind of video settings). You can use **numbered** files (`1.mkv`, `2.mkv`, …) or **all `.mkv` files** here in A–Z name order. You type the **output** filename. |
-| **3** — Trim | Keeps only the part from a **start time** to an **end time** (like 0:01:00 to 0:02:30). You can type the file name or paste the **full path** to the video. |
-| **4** — GIF | Turns part of a video into an animated GIF. You pick **S / M / L** for smaller-or-larger GIF, then enter how many **seconds** long the GIF should be (not the end time). |
-| **5** — Exit | Close the program. |
-
-For letter shortcuts (**U/H/M/L**, **N/A**, **S/M/L**, **B**), follow the text at the bottom of each screen.
+Full walkthrough and troubleshooting: **[INSTRUCTIONS.md](INSTRUCTIONS.md)**.
 
 ---
 
-## Other files in this project
+## Output file names
 
-| File | For beginners… |
-|------|------------------|
-| **INSTRUCTIONS.md** | Read this for **step-by-step** help, including FFmpeg on Windows. |
-| **FUTURE_IMPROVEMENTS.md** | Ideas for later—**not** something you must install. |
-| **README.md** | You are here—big-picture overview. |
+| Action | Output |
+|--------|--------|
+| Resize or trim | `basename_converted` + same extension as the source |
+| GIF | `basename_converted.gif` |
+| Join | **You choose** the name (default suggestion in script: `vc_joined.mkv`) |
 
----
-
-## Small files the menu may create
-
-- **`progress.txt`** — Used while a job runs; the menu removes it when that step is done.  
-- **`joinlist.txt`** — Used when joining videos; removed after the join step.
-
-You can ignore them unless something went wrong and you are troubleshooting.
+Originals are **never** deleted. An existing `*_converted*` file with the same base name can be **overwritten** if you run the same operation again.
 
 ---
 
-## Good to know
+## Menu at a glance
 
-- **Join** is picky: if clips were recorded differently, joining might fail until they are converted to match (the full guide explains more).
-- **Resize** and **GIF** take time because the video is processed again; **trim** and **join** try to be fast by copying data when possible.
-- If an error message is short, open **[INSTRUCTIONS.md](INSTRUCTIONS.md)** or run FFmpeg from a terminal yourself for more detail.
+| Key | Role |
+|-----|------|
+| **1** | Resize all **`.mkv` / `.mp4`** in the **current folder only** — presets **U / H / M / L**, **B** back. |
+| **2** | Join — **N** numbered files, **A** all `.mkv` A–Z, **B** back; you set the output filename. |
+| **3** | Trim — start/end `HH:MM:SS`; optional full path to source. |
+| **4** | GIF — **S / M / L**, **B** back; duration is **seconds** (not end time). |
+| **5** | Exit |
+
+Letter keys are shown on each screen; behavior matches **`FOR FFMPEG.bat`** (source of truth if docs drift).
+
+---
+
+## Repository layout
+
+| Path | Audience |
+|------|----------|
+| `FOR FFMPEG.bat` | Everyone — the tool. |
+| [INSTRUCTIONS.md](INSTRUCTIONS.md) | Beginners — step-by-step usage and FFmpeg on Windows. |
+| [FUTURE_IMPROVEMENTS.md](FUTURE_IMPROVEMENTS.md) | Developers — non-binding ideas and possible enhancements. |
+| `README.md` | Everyone — orientation and technical overview. |
+
+---
+
+## Helper files the script writes
+
+Names are defined at the top of **`FOR FFMPEG.bat`** as **`VC_PROGRESS`** and **`VC_JOINLIST`** (default: `progress.txt`, `joinlist.txt`). They are deleted when each step finishes (or after a join attempt). Safe to ignore unless debugging.
+
+---
+
+## For developers
+
+**Stack:** Windows **batch** + **FFmpeg CLI**. No package manager, no build step, no runtime beyond `ffmpeg` on `PATH`.
+
+**Flow:** `setlocal EnableDelayedExpansion` → `pushd "%~dp0"` → FFmpeg gate → main loop (`:menu`) → tool labels (`:tool_resize`, …) → shared UI helpers.
+
+**Worth knowing when editing:**
+
+- **`choice` / `errorlevel`:** `if errorlevel N` is true for **N and any higher** code; branches are ordered **high → low** (e.g. 5 before 4) so the right option wins.
+- **Colors:** `:color_main`, `:color_title`, `:color_info`, `:color_prompt`, `:color_run`, `:color_success`, `:color_error`, `:color_neutral` — whole-screen `color` attributes (not per-line ANSI).
+- **Errors:** Short user cancels / validation failures use `:show_err_short` when appropriate; FFmpeg failures capture `%errorlevel%` **before** `:clean_progress` corrupts it.
+- **Quoting:** Timecodes and paths passed to FFmpeg are **quoted** where user input can break parsing.
+- **Compatibility:** Resize result messaging uses **nested** `if` / `else` (avoid `else if` for older `cmd` builds).
+- **Validation (current behavior):** Join **N** must be a positive integer; trim requires start/end times; GIF duration must be a whole number **≥ 1**; empty GIF start defaults to **`0:00:00`**; resize reports when no `.mkv`/`.mp4` are present.
+
+**Places to tune behavior:** Scale presets and `force_original_aspect_ratio=decrease` in `:tool_resize`; concat / copy flags in join; GIF `-vf` chains in `:tool_gif`.
+
+**Testing:** No automated tests — use a scratch folder, small sample clips, and compare FFmpeg exit codes / output files.
+
+---
+
+## Good to know (everyone)
+
+- **Join** usually needs matching resolution, frame rate, and codec settings for **stream copy** to succeed.
+- **Resize** and **GIF** re-encode; **trim** and **join** prefer fast stream copy when possible.
+- Logs use **`-loglevel error`**; for deep debugging, rerun the same FFmpeg line in a terminal with higher verbosity.
+
+---
 
 ## License
 
