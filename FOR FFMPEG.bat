@@ -86,17 +86,23 @@ echo.
 set "resizeHadErr=0"
 set "resizeCount=0"
 for %%A in (*.mkv *.mp4) do (
-    set /a resizeCount+=1
-    set "resizeOut=%%~nA_converted%%~xA"
-    echo      --- %%A  -^>  !resizeOut! ---
-    ffmpeg -hide_banner -loglevel error -i "%%A" -vf "scale=!scaleFilter!" -progress "%VC_PROGRESS%" -nostats -y "!resizeOut!"
-    if errorlevel 1 set "resizeHadErr=1"
-    call :clean_progress
+    if exist "%%~fA" (
+        set "resizeBase=%%~nA"
+        echo !resizeBase!| findstr /i /r "_converted$" >nul
+        if errorlevel 1 (
+            set /a resizeCount+=1
+            set "resizeOut=%%~nA_converted%%~xA"
+            echo      --- %%A  -^>  !resizeOut! ---
+            ffmpeg -hide_banner -loglevel error -i "%%A" -vf "scale=!scaleFilter!" -progress "%VC_PROGRESS%" -nostats -y "!resizeOut!"
+            if errorlevel 1 set "resizeHadErr=1"
+            call :clean_progress
+        )
+    )
 )
 if "!resizeCount!"=="0" (
     call :color_error
     echo.
-    echo      No .mkv or .mp4 files in this folder.
+    echo      No source .mkv or .mp4 files found ^(or only *_converted files^).
 ) else (
     if "!resizeHadErr!"=="1" (
         call :color_error
