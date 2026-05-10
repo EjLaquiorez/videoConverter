@@ -4,6 +4,12 @@ Ideas for evolving **videoConverter** (`FOR FFMPEG.bat` and docs). Nothing here 
 
 ---
 
+## Recently shipped
+
+- **Batch resize wildcard safety (May 2026)** — Resize now skips non-existent wildcard matches and ignores files already ending in `_converted`, preventing false failures when only one extension type is present.
+
+---
+
 ## User experience
 
 - **Drag-and-drop** — Accept a video path as `%1` when the user drops a file onto the `.bat`, then jump to trim or GIF with that path pre-filled.
