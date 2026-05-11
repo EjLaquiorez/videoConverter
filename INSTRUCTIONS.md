@@ -61,13 +61,13 @@ The window is sized for the built-in help text (**90 columns × 42 lines**).
 | GIF | `originalname_converted.gif` |
 | Join | **You choose** the output file name (default suggestion: `vc_joined.mkv`). Include an extension such as `.mkv` or `.mp4`. |
 
-**Important:** originals are **not** deleted. If `something_converted.ext` already exists, running the tool again **overwrites** that converted file only.
+**Important:** originals are **not** deleted. If `something_converted.ext` already exists, running the same source again **overwrites** that converted file.
 
 ---
 
 ## 5. Option 1 — Batch resize
 
-**What it does:** re-encodes every **`.mkv`** and **`.mp4`** in the **current folder only** (videos in subfolders are **not** included) to fit inside a chosen maximum size. **Aspect ratio is preserved** (no stretching; video fits inside the box).
+**What it does:** re-encodes source **`.mkv`** and **`.mp4`** files in the **current folder only** (videos in subfolders are **not** included) to fit inside a chosen maximum size. It skips files already ending with `_converted` so outputs are not repeatedly re-processed. **Aspect ratio is preserved** (no stretching; video fits inside the box).
 
 **Steps:**
 
@@ -79,6 +79,8 @@ The window is sized for the built-in help text (**90 columns × 42 lines**).
    - **L** — up to 640×360
    - **B** — back to main menu
 3. Wait until processing finishes. If any file fails, you will see a warning after the loop.
+
+**Note:** The script safely ignores missing wildcard matches, so having only `.mp4` files (or only `.mkv` files) no longer causes a false failure.
 
 ---
 
