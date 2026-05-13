@@ -1,6 +1,6 @@
 # videoConverter
 
-**One Windows batch menu** plus Markdown docs. It drives **FFmpeg** so you can resize batches of videos, join clips, trim by time, or export a short GIF—without typing long commands yourself.
+**One Windows batch menu** plus Markdown docs. It drives **FFmpeg** so you can resize a whole folder of videos, join clips, trim by time, or export a short GIF — without typing long commands yourself.
 
 | If you are… | Start here |
 |-------------|------------|
@@ -44,7 +44,7 @@ Full walkthrough and troubleshooting: **[INSTRUCTIONS.md](INSTRUCTIONS.md)**.
 | GIF | `basename_converted.gif` |
 | Join | **You choose** the name (default suggestion in script: `vc_joined.mkv`) |
 
-Originals are **never** deleted. An existing `*_converted*` file with the same base name can be **overwritten** if you run the same operation again.
+Originals are **never** deleted. **Resize** also **skips** any file whose base name already ends in `_converted`, so re-running the batch won’t double-process its own outputs. For trim and GIF, an existing `*_converted*` with the same base name is **overwritten** when you run the same operation again.
 
 ---
 
@@ -52,7 +52,7 @@ Originals are **never** deleted. An existing `*_converted*` file with the same b
 
 | Key | Role |
 |-----|------|
-| **1** | Resize all **`.mkv` / `.mp4`** in the **current folder only** — presets **U / H / M / L**, **B** back. |
+| **1** | Resize all **`.mkv` / `.mp4`** in the **current folder only** (skips `*_converted` files) — presets **U / H / M / L**, **B** back. |
 | **2** | Join — **N** numbered files, **A** all `.mkv` A–Z, **B** back; you set the output filename. |
 | **3** | Trim — start/end `HH:MM:SS`; optional full path to source. |
 | **4** | GIF — **S / M / L**, **B** back; duration is **seconds** (not end time). |
@@ -83,18 +83,18 @@ Names are defined at the top of **`FOR FFMPEG.bat`** as **`VC_PROGRESS`** and **
 
 **Stack:** Windows **batch** + **FFmpeg CLI**. No package manager, no build step, no runtime beyond `ffmpeg` on `PATH`.
 
-**Flow:** `setlocal EnableDelayedExpansion` → `pushd "%~dp0"` → FFmpeg gate → main loop (`:menu`) → tool labels (`:tool_resize`, …) → shared UI helpers.
+**Flow:** `setlocal EnableDelayedExpansion` → `mode con: cols=90 lines=42` (forces a fixed window) → `pushd "%~dp0"` → FFmpeg gate (`where ffmpeg`) → main loop (`:menu`) → tool labels (`:tool_resize`, …) → shared UI helpers.
 
 **Worth knowing when editing:**
 
-- **`choice` / `errorlevel`:** `if errorlevel N` is true for **N and any higher** code; branches are ordered **high → low** (e.g. 5 before 4) so the right option wins.
+- **`choice` / `errorlevel`:** `if errorlevel N` is true for **N and any higher** code, so branches are ordered **high → low** (e.g. 5 before 4) to make the right option win.
 - **Colors:** `:color_main`, `:color_title`, `:color_info`, `:color_prompt`, `:color_run`, `:color_success`, `:color_error`, `:color_neutral` — whole-screen `color` attributes (not per-line ANSI).
-- **Errors:** Short user cancels / validation failures use `:show_err_short` when appropriate; FFmpeg failures capture `%errorlevel%` **before** `:clean_progress` corrupts it.
-- **Quoting:** Timecodes and paths passed to FFmpeg are **quoted** where user input can break parsing.
+- **Errors:** Short user cancels and validation failures call `:show_err_short`; FFmpeg failures capture `%errorlevel%` **before** `:clean_progress` runs, since helper calls reset it.
+- **Quoting:** Timecodes and paths passed to FFmpeg are **quoted** wherever user input could break parsing.
 - **Compatibility:** Resize result messaging uses **nested** `if` / `else` (avoid `else if` for older `cmd` builds).
-- **Validation (current behavior):** Join **N** must be a positive integer; trim requires start/end times; GIF duration must be a whole number **≥ 1**; empty GIF start defaults to **`0:00:00`**; resize reports when no `.mkv`/`.mp4` are present.
+- **Validation (current behavior):** Join **N** must be a positive integer; trim requires both start and end times; GIF duration must be a whole number **≥ 1**; an empty GIF start defaults to **`0:00:00`**; resize **skips** any file whose base name already ends in `_converted` and reports when nothing remains to process.
 
-**Places to tune behavior:** Scale presets and `force_original_aspect_ratio=decrease` in `:tool_resize`; concat / copy flags in join; GIF `-vf` chains in `:tool_gif`.
+**Places to tune behavior:** Scale presets and `force_original_aspect_ratio=decrease` in `:tool_resize`; the `findstr /i /r "_converted$"` skip filter in the resize loop; concat / `-c copy` flags in join; GIF `-vf` chains (fps + scale) in `:tool_gif`.
 
 **Testing:** No automated tests — use a scratch folder, small sample clips, and compare FFmpeg exit codes / output files.
 
@@ -102,9 +102,9 @@ Names are defined at the top of **`FOR FFMPEG.bat`** as **`VC_PROGRESS`** and **
 
 ## Good to know (everyone)
 
-- **Join** usually needs matching resolution, frame rate, and codec settings for **stream copy** to succeed.
-- **Resize** and **GIF** re-encode; **trim** and **join** prefer fast stream copy when possible.
-- Logs use **`-loglevel error`**; for deep debugging, rerun the same FFmpeg line in a terminal with higher verbosity.
+- **Join** needs all clips to share resolution, frame rate, and codec settings for **stream copy** (`-c copy`) to succeed; otherwise FFmpeg errors out and nothing is saved.
+- **Resize** and **GIF** re-encode; **trim** and **join** use stream copy, so trim cuts snap to the nearest keyframe in the source.
+- Logs use **`-loglevel error`**, so the screen stays quiet on success. For deep debugging, rerun the same FFmpeg line in a terminal with higher verbosity (e.g. `-loglevel info`).
 
 ---
 
