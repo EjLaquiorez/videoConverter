@@ -2,11 +2,15 @@
 
 Ideas for evolving **videoConverter** (`FOR FFMPEG.bat` and docs). Nothing here is committed work—use it as a backlog or design scratchpad.
 
+**Source of truth for behavior:** `FOR FFMPEG.bat`. **README.md** = overview; **INSTRUCTIONS.md** = step-by-step; this file = backlog only.
+
 ---
 
 ## Recently shipped
 
-- **Batch resize wildcard safety (May 2026)** — Resize now skips non-existent wildcard matches and ignores files already ending in `_converted`, preventing false failures when only one extension type is present.
+- **Batch resize wildcard safety (May 14, 2026)** — Resize skips non-existent `*.mkv` / `*.mp4` wildcard slots (`if exist "%%~fA"`) and sources whose base name already ends in `_converted`, so a folder with only one extension type no longer false-fails and batch runs do not re-encode prior outputs.
+- **Script hardening (May 14, 2026)** — `VC_PROGRESS` / `VC_JOINLIST` temp names, `:show_err_short` for validation, FFmpeg `%errorlevel%` captured before `:clean_progress`, quoted paths/timecodes, nested `if`/`else` for resize results (older `cmd` friendly).
+- **Docs sync (May 14, 2026)** — README and INSTRUCTIONS aligned on overwrite vs skip, resize presets (U/H/M/L, S/M/L widths), wildcard note, join/trim/GIF caveats, and README → INSTRUCTIONS §10 troubleshooting link.
 
 ---
 
@@ -14,7 +18,7 @@ Ideas for evolving **videoConverter** (`FOR FFMPEG.bat` and docs). Nothing here 
 
 - **Drag-and-drop** — Accept a video path as `%1` when the user drops a file onto the `.bat`, then jump to trim or GIF with that path pre-filled.
 - **Output folder** — Optional subfolder (e.g. `converted\`) so outputs never sit mixed with sources unless the user wants that.
-- **Overwrite guard** — Prompt or skip when `*_converted*` already exists (resize / trim / GIF). Today the converted file is silently overwritten.
+- **Overwrite guard** — Prompt or skip when `basename_converted.ext` already exists (resize / trim / GIF). Today the converted file is silently overwritten; docs describe this, the script does not ask.
 - **Progress display** — The script already writes `progress.txt` via `-progress` but nothing reads it. Parse `out_time_ms` / `total_size` and print a single-line `[xx%] elapsed=… size=…` so batch runs feel less silent without enabling FFmpeg’s default chatter.
 - **Help on demand** — A `?` key at any prompt that prints a longer help paragraph (durations, paths, examples) without leaving the tool. Keeps the on-screen text short by default.
 - **Sticky last choice** — Remember the last preset (`U/H/M/L`, `S/M/L`) in a tiny `vc_settings.ini` next to the script and pre-select it on the next run.
@@ -31,20 +35,20 @@ Ideas for evolving **videoConverter** (`FOR FFMPEG.bat` and docs). Nothing here 
 ## Resize
 
 - **Custom size** — Prompt for width×height or “max long edge” once instead of fixed presets only.
-- **Audio / subtitles** — Explicit `-map` or copy behavior documented; optional “video only” or “copy all streams” choice.
+- **Audio / subtitles** — Explicit `-map` or copy behavior documented in-tool; optional “video only” or “copy all streams” choice.
 - **Recurse opt-in** — Today only the script’s folder is scanned. An optional `[R]ecurse` flag could descend subfolders, with output mirrored next to each source.
 - **Skip-if-smaller** — When a source is already inside the chosen box, copy streams (or skip) instead of re-encoding.
 
 ## Trim / cut
 
-- **Keyframe-safe copy** — Short note or optional shift to re-encode a few frames when stream copy cuts look wrong.
+- **Re-encode trim fallback** — README/INSTRUCTIONS already note stream-copy keyframe limits; optional re-encode path when cuts look wrong or times do not land cleanly.
 - **Milliseconds** — Accept `HH:MM:SS.mmm` if users paste from tools that emit fractions.
 - **Duration as alternative to end** — Mirror the GIF tool: allow “start + length in seconds” in addition to start/end pairs.
 
 ## GIF
 
 - **Palette pipeline** — `palettegen` + `paletteuse` for better colors and often smaller files than single-pass `gif`.
-- **FPS / scale override** — Advanced prompt after presets for power users.
+- **FPS / scale override** — Advanced prompt after presets for power users (today: S 240px 8fps, M 320px 10fps, L 480px 12fps in `:tool_gif`).
 - **End time too** — Optional `HH:MM:SS` end input alongside the current “duration in seconds”.
 
 ## Robustness and packaging
@@ -64,8 +68,9 @@ Ideas for evolving **videoConverter** (`FOR FFMPEG.bat` and docs). Nothing here 
 
 ## Documentation
 
-- Keep **README.md** high-level; **INSTRUCTIONS.md** procedural; this file for **ideas only**—update or prune as items ship or are rejected.
+- **GIF preset table in INSTRUCTIONS** — Match README / on-screen labels (S 240px 8fps, M 320px 10fps, L 480px 12fps) so all three stay in sync.
+- **Changelog habit** — When code or behavior changes, update **Recently shipped** here and the relevant section of README or INSTRUCTIONS in the same pass.
 
 ---
 
-When you implement something from this list, consider removing or checking it off here so the doc stays honest.
+When you implement something from this list, move it to **Recently shipped** (with a short note) or delete it so the doc stays honest.
