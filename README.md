@@ -44,7 +44,7 @@ Full walkthrough and troubleshooting: **[INSTRUCTIONS.md](INSTRUCTIONS.md)**.
 | GIF | `basename_converted.gif` |
 | Join | **You choose** the name (default suggestion in script: `vc_joined.mkv`) |
 
-Originals are **never** deleted. **Resize** also **skips** any file whose base name already ends in `_converted`, so re-running the batch won’t double-process its own outputs. For trim and GIF, an existing `*_converted*` with the same base name is **overwritten** when you run the same operation again.
+Originals are **never** deleted. If `basename_converted.ext` already exists, running the same job again **overwrites** that converted file. **Resize** also **skips** any **source** whose base name already ends in `_converted`, so a batch pass won’t re-encode its own outputs.
 
 ---
 
@@ -52,10 +52,10 @@ Originals are **never** deleted. **Resize** also **skips** any file whose base n
 
 | Key | Role |
 |-----|------|
-| **1** | Resize all **`.mkv` / `.mp4`** in the **current folder only** (skips `*_converted` files) — presets **U / H / M / L**, **B** back. |
+| **1** | Resize all **`.mkv` / `.mp4`** in the **current folder only** (skips `*_converted` sources) — **U** 4K, **H** 1080p, **M** 720p, **L** 360p, **B** back. |
 | **2** | Join — **N** numbered files, **A** all `.mkv` A–Z, **B** back; you set the output filename. |
-| **3** | Trim — start/end `HH:MM:SS`; optional full path to source. |
-| **4** | GIF — **S / M / L**, **B** back; duration is **seconds** (not end time). |
+| **3** | Trim — start/end `HH:MM:SS`; source name or full path. |
+| **4** | GIF — **S** 240px / **M** 320px / **L** 480px, **B** back; duration in **seconds** (not end time). |
 | **5** | Exit |
 
 Letter keys are shown on each screen; behavior matches **`FOR FFMPEG.bat`** (source of truth if docs drift).
@@ -92,9 +92,9 @@ Names are defined at the top of **`FOR FFMPEG.bat`** as **`VC_PROGRESS`** and **
 - **Errors:** Short user cancels and validation failures call `:show_err_short`; FFmpeg failures capture `%errorlevel%` **before** `:clean_progress` runs, since helper calls reset it.
 - **Quoting:** Timecodes and paths passed to FFmpeg are **quoted** wherever user input could break parsing.
 - **Compatibility:** Resize result messaging uses **nested** `if` / `else` (avoid `else if` for older `cmd` builds).
-- **Validation (current behavior):** Join **N** must be a positive integer; trim requires both start and end times; GIF duration must be a whole number **≥ 1**; an empty GIF start defaults to **`0:00:00`**; resize **skips** any file whose base name already ends in `_converted` and reports when nothing remains to process.
+- **Validation (current behavior):** Join **N** must be a positive integer; trim requires both start and end times; GIF duration must be a whole number **≥ 1**; an empty GIF start defaults to **`0:00:00`**; resize **skips** sources ending in `_converted`, ignores missing `*.mkv` / `*.mp4` wildcard slots (`if exist "%%~fA"`), and reports when nothing remains to process.
 
-**Places to tune behavior:** Scale presets and `force_original_aspect_ratio=decrease` in `:tool_resize`; the `findstr /i /r "_converted$"` skip filter in the resize loop; concat / `-c copy` flags in join; GIF `-vf` chains (fps + scale) in `:tool_gif`.
+**Places to tune behavior:** Scale presets and `force_original_aspect_ratio=decrease` in `:tool_resize`; the `findstr /i /r "_converted$"` skip filter and per-file `if exist` guard in the resize loop; concat / `-c copy` flags in join; GIF `-vf` chains (fps + scale) in `:tool_gif`.
 
 **Testing:** No automated tests — use a scratch folder, small sample clips, and compare FFmpeg exit codes / output files.
 
@@ -104,7 +104,10 @@ Names are defined at the top of **`FOR FFMPEG.bat`** as **`VC_PROGRESS`** and **
 
 - **Join** needs all clips to share resolution, frame rate, and codec settings for **stream copy** (`-c copy`) to succeed; otherwise FFmpeg errors out and nothing is saved.
 - **Resize** and **GIF** re-encode; **trim** and **join** use stream copy, so trim cuts snap to the nearest keyframe in the source.
+- **Resize** only looks in the script folder (not subfolders). A folder with only `.mp4` or only `.mkv` files is fine.
 - Logs use **`-loglevel error`**, so the screen stays quiet on success. For deep debugging, rerun the same FFmpeg line in a terminal with higher verbosity (e.g. `-loglevel info`).
+
+**Troubleshooting:** see **[INSTRUCTIONS.md §10](INSTRUCTIONS.md#10-if-something-goes-wrong)** (PATH, join compatibility, trim times, sparse FFmpeg output).
 
 ---
 
